@@ -300,8 +300,10 @@ async function draw() {
  
     const svgStr = getSvgString(getById('overlay-svg'));
 
+    // Use encodeURIComponent for Unicode support (emojis)
     const svgImage = await imageWithLoadedSrc(
-        'data:image/svg+xml;base64,' + btoa(svgStr)
+        'data:image/svg+xml;charset=utf-8,' +
+        encodeURIComponent(svgStr)
     );
     ctx.drawImage(svgImage, 0, 0, canvas.width, canvas.height);
 }
