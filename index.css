@@ -128,3 +128,38 @@ footer {
     height: 200px;
     width: 200px;
 }
+
+/* Preset Badge Buttons */
+#preset-badges {
+    margin: 1.5em 0;
+}
+
+#preset-badges h3 {
+    color: var(--fg-color);
+    font-size: 0.9em;
+    margin: 1em 0 0.5em 0;
+    opacity: 0.8;
+}
+
+.badge-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4em;
+}
+
+.badge-group button {
+    background-color: var(--bg-light-color);
+    color: var(--fg-color);
+    padding: 0.4em 0.7em;
+    font-size: 0.85em;
+    border: 1px solid var(--fg-color);
+    border-radius: 4px;
+    opacity: 0.9;
+    transition: all 0.15s ease;
+}
+
+.badge-group button:hover {
+    background-color: var(--primary-color);
+    color: var(--bg-color);
+    opacity: 1;
+}

@@ -335,9 +335,45 @@ getById('portrait-image-upload').addEventListener('change', function(event) {
     reader.readAsDataURL(event.target.files[0]);
 })
 
-getById('badge-text-input').addEventListener('input', () => {
-    const badgeText = getById('badge-text-input').value.toUpperCase();
-    getById('overlay-text-path').innerHTML = `🦬${badgeText}`;
+/**
+ * Updates the badge text display from input value.
+ * Prepends the bison emoji and uppercases the text.
+ * Dynamically adjusts font size for longer text.
+ * @returns {void}
+ */
+function updateBadgeText() {
+    const badgeText = getById('badge-text-input')
+        .value.toUpperCase();
+    const textPath = getById('overlay-text-path');
+    
+    textPath.innerHTML = `🦬${badgeText}`;
+    
+    // Scale font size for longer text to prevent clipping
+    // Base size is 15.875px, fits ~6 chars comfortably
+    const baseSize = 15.875;
+    const baseChars = 6;
+    const textLength = badgeText.length;
+    
+    let fontSize = baseSize;
+    if (textLength > baseChars) {
+        // Scale down proportionally for longer text
+        fontSize = baseSize * (baseChars / textLength);
+        // Set a minimum readable size
+        fontSize = Math.max(fontSize, 8);
+    }
+    
+    textPath.style.fontSize = `${fontSize}px`;
+}
+
+getById('badge-text-input').addEventListener('input', updateBadgeText);
+
+// Preset badge button click handlers
+getById('preset-badges').addEventListener('click', (event) => {
+    if (event.target.tagName !== 'BUTTON') return;
+    
+    const badgeText = event.target.textContent;
+    getById('badge-text-input').value = badgeText;
+    updateBadgeText();
 });
 
 getById('badge-bg-color-input').addEventListener('input', () => {
@@ -375,3 +411,26 @@ if (placeholderImage.complete) {
         resetImageTransform(placeholderImage);
     };
 }
+
+// ============================================
+// URL Parameter Initialization
+// ============================================
+
+/**
+ * Reads URL parameters and applies them to the UI.
+ * Supports: ?badge=text
+ * @returns {void}
+ */
+function applyUrlParameters() {
+    const urlParams = new URLSearchParams(
+        window.location.search
+    );
+
+    const badgeParam = urlParams.get('badge');
+    if (badgeParam) {
+        getById('badge-text-input').value = badgeParam;
+        updateBadgeText();
+    }
+}
+
+applyUrlParameters();
