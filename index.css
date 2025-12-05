@@ -97,13 +97,29 @@ footer {
     height: 200px;
     width: 200px;
     margin: 1em 0;
+    overflow: hidden;
+    cursor: grab;
+    border-radius: 4px;
 }
 
-#image-preview img,
+#image-preview img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    /* Remove fixed size so transform works */
+    width: auto;
+    height: auto;
+    /* Prevent drag ghost image */
+    pointer-events: none;
+    user-select: none;
+}
+
 #image-preview svg {
     position: absolute;
     top: 0;
     left: 0;
+    /* SVG stays above and doesn't interfere */
+    pointer-events: none;
 }
 
 #canvas-image {

@@ -7,6 +7,193 @@ function getById(id) {
     return document.getElementById(id)
 }
 
+// ============================================
+// Image Transform State
+// ============================================
+
+/** Current zoom level (1.0 = cover fit) */
+let imageScale = 1.0;
+
+/** Pan offset X in pixels (relative to preview) */
+let imageOffsetX = 0;
+
+/** Pan offset Y in pixels (relative to preview) */
+let imageOffsetY = 0;
+
+/** Base scale to "cover" the preview area */
+let baseCoverScale = 1.0;
+
+/** Original image dimensions */
+let naturalWidth = 0;
+let naturalHeight = 0;
+
+/** Preview container size */
+const PREVIEW_SIZE = 200;
+
+/** Canvas output size */
+const CANVAS_SIZE = 500;
+
+/**
+ * Resets transform state when a new image loads.
+ * Calculates the base scale needed to "cover"
+ * the preview area while maintaining aspect ratio.
+ * @param {HTMLImageElement} imageElement
+ * @returns {void}
+ */
+function resetImageTransform(imageElement) {
+    naturalWidth = imageElement.naturalWidth;
+    naturalHeight = imageElement.naturalHeight;
+
+    // Calculate scale to cover (fill) the preview
+    // Pick the larger scale so image covers the area
+    const scaleX = PREVIEW_SIZE / naturalWidth;
+    const scaleY = PREVIEW_SIZE / naturalHeight;
+    baseCoverScale = Math.max(scaleX, scaleY);
+
+    // Reset to default zoom and center the image
+    imageScale = 1.0;
+    imageOffsetX = 0;
+    imageOffsetY = 0;
+
+    updateImagePreview();
+}
+
+/**
+ * Updates the preview image CSS transform based
+ * on current scale and offset values.
+ * @returns {void}
+ */
+function updateImagePreview() {
+    const portraitImage = getById('portrait-image');
+    const finalScale = baseCoverScale * imageScale;
+
+    // Calculate scaled dimensions
+    const scaledWidth = naturalWidth * finalScale;
+    const scaledHeight = naturalHeight * finalScale;
+
+    // Center the image then apply offset
+    const centerX = (PREVIEW_SIZE - scaledWidth) / 2;
+    const centerY = (PREVIEW_SIZE - scaledHeight) / 2;
+
+    const translateX = centerX + imageOffsetX;
+    const translateY = centerY + imageOffsetY;
+
+    portraitImage.style.transform =
+        `translate(${translateX}px, ${translateY}px) ` +
+        `scale(${finalScale})`;
+    portraitImage.style.transformOrigin = 'top left';
+}
+
+/**
+ * Clamps the pan offset so the image always
+ * covers the preview area (no empty space).
+ * @returns {void}
+ */
+function clampOffset() {
+    const finalScale = baseCoverScale * imageScale;
+    const scaledWidth = naturalWidth * finalScale;
+    const scaledHeight = naturalHeight * finalScale;
+
+    // How much the image overflows the preview
+    const overflowX = (scaledWidth - PREVIEW_SIZE) / 2;
+    const overflowY = (scaledHeight - PREVIEW_SIZE) / 2;
+
+    // Clamp offsets so image always covers preview
+    const maxOffsetX = Math.max(0, overflowX);
+    const maxOffsetY = Math.max(0, overflowY);
+
+    imageOffsetX = Math.max(-maxOffsetX,
+                   Math.min(maxOffsetX, imageOffsetX));
+    imageOffsetY = Math.max(-maxOffsetY,
+                   Math.min(maxOffsetY, imageOffsetY));
+}
+
+/**
+ * Handles mouse wheel zoom on the image preview.
+ * @param {WheelEvent} event
+ * @returns {void}
+ */
+function handleZoom(event) {
+    event.preventDefault();
+
+    const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
+    const newScale = imageScale * zoomFactor;
+
+    // Clamp zoom between 1x (cover) and 5x
+    imageScale = Math.max(1.0, Math.min(5.0, newScale));
+
+    clampOffset();
+    updateImagePreview();
+}
+
+/**
+ * Sets up drag-to-pan functionality on the
+ * image preview container.
+ * @returns {void}
+ */
+function setupPanHandlers() {
+    const previewContainer = getById('image-preview');
+    let isDragging = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    previewContainer.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        previewContainer.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+
+        const deltaX = e.clientX - lastX;
+        const deltaY = e.clientY - lastY;
+        lastX = e.clientX;
+        lastY = e.clientY;
+
+        imageOffsetX += deltaX;
+        imageOffsetY += deltaY;
+
+        clampOffset();
+        updateImagePreview();
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        previewContainer.style.cursor = 'grab';
+    });
+
+    // Touch support for mobile
+    previewContainer.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            isDragging = true;
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isDragging || e.touches.length !== 1) return;
+
+        const deltaX = e.touches[0].clientX - lastX;
+        const deltaY = e.touches[0].clientY - lastY;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+
+        imageOffsetX += deltaX;
+        imageOffsetY += deltaY;
+
+        clampOffset();
+        updateImagePreview();
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+        isDragging = false;
+    });
+}
+
 /**
  * Escapes HTML special characters to prevent
  * XSS attacks when inserting user input.
@@ -77,6 +264,7 @@ function getSvgString(svg) {
 /**
  * Renders the badge by compositing the portrait
  * image and SVG overlay onto the canvas.
+ * Applies current zoom and pan transforms.
  * @returns {Promise<void>}
  */
 async function draw() {
@@ -87,12 +275,34 @@ async function draw() {
     // Clear the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const image = await imageWithLoadedSrc(imagePreview.src)
-    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const image = await imageWithLoadedSrc(imagePreview.src);
+
+    // Scale factor from preview to canvas
+    const previewToCanvas = CANVAS_SIZE / PREVIEW_SIZE;
+
+    // Calculate final scale and position for canvas
+    const finalScale = baseCoverScale * imageScale;
+    const canvasScale = finalScale * previewToCanvas;
+
+    const scaledWidth = naturalWidth * finalScale;
+    const scaledHeight = naturalHeight * finalScale;
+
+    // Center position + offset, scaled to canvas
+    const centerX = (PREVIEW_SIZE - scaledWidth) / 2;
+    const centerY = (PREVIEW_SIZE - scaledHeight) / 2;
+
+    const drawX = (centerX + imageOffsetX) * previewToCanvas;
+    const drawY = (centerY + imageOffsetY) * previewToCanvas;
+    const drawWidth = naturalWidth * canvasScale;
+    const drawHeight = naturalHeight * canvasScale;
+
+    ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
  
     const svgStr = getSvgString(getById('overlay-svg'));
 
-    const svgImage = await imageWithLoadedSrc('data:image/svg+xml;base64,' + btoa(svgStr))
+    const svgImage = await imageWithLoadedSrc(
+        'data:image/svg+xml;base64,' + btoa(svgStr)
+    );
     ctx.drawImage(svgImage, 0, 0, canvas.width, canvas.height);
 }
 
@@ -112,11 +322,15 @@ async function download() {
 }
 
 getById('portrait-image-upload').addEventListener('change', function(event) {
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = function(e) {
-        getById('portrait-image').src = e.target.result
-    }
-    reader.readAsDataURL(event.target.files[0])
+        const portraitImage = getById('portrait-image');
+        portraitImage.onload = function() {
+            resetImageTransform(portraitImage);
+        };
+        portraitImage.src = e.target.result;
+    };
+    reader.readAsDataURL(event.target.files[0]);
 })
 
 getById('badge-text-input').addEventListener('input', () => {
@@ -139,4 +353,22 @@ getById('upload-button').addEventListener('click', () => {
 
 getById('download-button').addEventListener('click', () => {
     download();
-})
+});
+
+// Set up zoom via mouse wheel
+getById('image-preview').addEventListener('wheel', handleZoom, {
+    passive: false
+});
+
+// Set up drag-to-pan
+setupPanHandlers();
+
+// Initialize transform for placeholder image
+const placeholderImage = getById('portrait-image');
+if (placeholderImage.complete) {
+    resetImageTransform(placeholderImage);
+} else {
+    placeholderImage.onload = function() {
+        resetImageTransform(placeholderImage);
+    };
+}
