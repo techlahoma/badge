@@ -1,7 +1,18 @@
+/**
+ * Gets a DOM element by its ID.
+ * @param {string} id - The element ID
+ * @returns {HTMLElement | null}
+ */
 function getById(id) {
     return document.getElementById(id)
 }
 
+/**
+ * Escapes HTML special characters to prevent
+ * XSS attacks when inserting user input.
+ * @param {string} str - The raw string to sanitize
+ * @returns {string} The escaped HTML-safe string
+ */
 function sanitizeHTML(str) {
     return str.replaceAll('&', '&amp;')
               .replaceAll('<', '&lt;')
@@ -10,7 +21,14 @@ function sanitizeHTML(str) {
               .replaceAll("'", '&#39;');
 }
 
-// Creates a new image and sets its src property, then waits for it to load
+/**
+ * Creates a new Image and waits for it to load.
+ * @param {string} src - The image source URL
+ * @returns {Promise<HTMLImageElement>}
+ *   Resolves with the loaded image element
+ * @throws {string} Rejects with error message
+ *   if image fails to load
+ */
 function imageWithLoadedSrc(src) {
     return new Promise((resolve, reject) => {
         const img = new Image()
@@ -20,7 +38,15 @@ function imageWithLoadedSrc(src) {
     })
 }
 
-// Inlines all the styles of an element and its children (used for SVG because the style is coming from CSS)
+/**
+ * Recursively inlines all computed styles on an
+ * element and its children. Required for SVG
+ * serialization since external CSS won't be
+ * included when converting to data URI.
+ * @param {Element} element - The DOM element to
+ *   inline styles for
+ * @returns {void}
+ */
 function inlineStyles(element) {
     const computedStyle = getComputedStyle(element);
     let style = '';
@@ -36,13 +62,23 @@ function inlineStyles(element) {
     }
 }
 
-// Returns a serialized SVG with all the styles inlined
+/**
+ * Serializes an SVG element to a string with all
+ * styles inlined for standalone rendering.
+ * @param {SVGElement} svg - The SVG element
+ * @returns {string} The serialized SVG markup
+ */
 function getSvgString(svg) {
     inlineStyles(svg);
     const serializer = new XMLSerializer();
     return serializer.serializeToString(svg);
 }
 
+/**
+ * Renders the badge by compositing the portrait
+ * image and SVG overlay onto the canvas.
+ * @returns {Promise<void>}
+ */
 async function draw() {
     const canvas = getById('canvas-image');
     const ctx = canvas.getContext('2d');
@@ -60,6 +96,11 @@ async function draw() {
     ctx.drawImage(svgImage, 0, 0, canvas.width, canvas.height);
 }
 
+/**
+ * Draws the final badge and triggers a PNG
+ * download with a default filename.
+ * @returns {Promise<void>}
+ */
 async function download() {
     await draw();
     const canvas = getById('canvas-image');
