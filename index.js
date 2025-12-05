@@ -334,7 +334,8 @@ getById('portrait-image-upload').addEventListener('change', function(event) {
 })
 
 getById('badge-text-input').addEventListener('input', () => {
-    getById('overlay-text-path').innerHTML = sanitizeHTML(getById('badge-text-input').value);
+    const badgeText = getById('badge-text-input').value.toUpperCase();
+    getById('overlay-text-path').innerHTML = `🦬${badgeText}`;
 });
 
 getById('badge-bg-color-input').addEventListener('input', () => {
