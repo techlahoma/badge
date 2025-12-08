@@ -1,44 +1,63 @@
+# Techlahoma Badge Creator
+
+Create a custom 🦬 Techlahoma badge for your LinkedIn profile picture!
+
+👉 [**Use it live**](https://badge.techlahoma.org/)
+
 ![Example Image](example.png)
 
-# LinkedIn profile badge
+## Features
 
-This is a tiny web app that puts a badged on your profile picture consistent with LinkedIn style but with your prefered text and colors.
+- **Upload any photo** - No need for square images
+- **Zoom & pan** - Scroll to zoom, drag to reposition
+- **Preset badges** - Quick-select from popular options:
+  - Techlahoma user groups (LUGNUTS, SHECODES, TWD, etc.)
+  - Programming languages (JS, PYTHON, RUST, etc.)
+  - Frameworks (REACT, DJANGO, NEXTJS, etc.)
+  - Cloud & DevOps (AWS, K8S, DOCKER, etc.)
+  - Data & AI (ML, LLM, ANALYTICS, etc.)
+  - Security (APPSEC, SRE, CYBER, etc.)
+  - Process (AGILE, SCRUM, TDD, etc.)
+- **Custom text** - Type any badge text you want
+- **URL parameters** - Link directly: `?badge=PYTHON`
+- **Privacy first** - All processing happens in your browser
 
-👉[**Use it live**](https://badge.alexewerlof.com/)
+## How to Use
 
-## Why?
+1. **Upload** your portrait photo
+2. **Zoom/pan** to frame your face perfectly
+3. **Pick a badge** from presets or type your own
+4. **Download** and update your LinkedIn profile
 
-The profile picture is the first piece of information that people see.
+## Technical Details
 
-LinkedIn currently (as of early 2024) only allows `#HIRED` and `#OPENTOWORK` in predefined colors.
-There are [some claims](https://www.cnbc.com/2023/10/31/dont-use-linkedins-open-to-work-sign-says-former-google-recruiter.html)
-that it hurts the job applicants to use the `#OPENTOWORK` badge.
+Built with vanilla JavaScript (no frameworks).
 
-Regardless of your opinion on the matter, the badge is a great place to spice up your online presence.
+- SVG overlay on an `<img>` element
+- CSS transforms for zoom/pan preview
+- Canvas compositing for final render
+- URL-encoded SVG data URIs (Unicode/emoji support)
+- Dynamic font scaling for longer text
 
-## How does it work?
+## URL Parameters
 
-This is a very simple application using vanilla JavaScript (no frameworks).
+Pre-fill the badge text via URL:
 
-* The trick is to use a `<svg>` that overlays the image file that is loaded into an `<img>`.
-* Upon tweaking the settings a simple JavaScript function updates the relevant element in the `<svg>`.
-* This also redraws a `<canvas>` element. The `<canvas>` is normally hidden (you can make it visible by commenting out the `display: none` in the CSS).
-* Upon download, the contents of the `<canvas>` is converted to `image/png`, put in a the `href` attribute of a `<link>` which is then programmatically clicked
-* The code is quick and dirty and I got a bit of help from [Copilot](https://github.com/features/copilot) too.
+```
+https://badge.techlahoma.org/?badge=SPEAKER
+```
 
-# How can I support you?
+## Credits
 
-This app took about 5 hours to develop and test.
-I addressed [my own needs](https://www.linkedin.com/in/alexewerlof/) via [inkscape](https://inkscape.org/) but I thought this is too good (and probably useful for job seekers) to keep it to myself. So I made this app to streamline the workflow without the need to install anything on your machine or having to learn any graphic design app.
+- Original app by [Alex Ewerlöf](https://alexewerlof.com/)
+- Techlahoma fork maintained by the community
 
-If it saved you time, consider [subscribing to my newsletter](https://blog.alexewerlof.com/subscribe).
+## License
 
-# I have ideas or suggestions
+See [LICENSE](LICENSE) for details.
 
-Please fork the repo and do whatever you like as long as it complies with the [license](LICENSE).
-
-This is not my main engagement and unless there's a serious bug in it, I don't intend to touch it.
+> *Note: This README was written with AI assistance (Claude)*
 
 ---
 
-🇸🇪 Made in Sweden by [Alex Ewerlöf](https://alexewerlof.com/)
+🦬 Made for [Techlahoma](https://techlahoma.org/)
